@@ -73,31 +73,32 @@ def compute_acceptance(threshold, use_block=False, count=muon_count):
 acc_ice = compute_acceptance(acceptance_threshold, use_block=False)
 acc_block = compute_acceptance(acceptance_threshold, use_block=True)
 
-# Define a scanning grid: 20×20 cm phantom divided into 5‑cm cells
-# Grid cells are centered at: [-7.5, -2.5, 2.5, 7.5] (4×4 grid, 5 cm spacing)
-grid_positions = [-7.5, -2.5, 2.5, 7.5]
-acceptance_map = np.ones((4, 4))
-relative_reduction_map = np.zeros_like(acceptance_map)
+# Define a high-resolution scanning grid (for precise centering)
+# Domain: 20×20 cm (x,y ∈ [-10, 10])
+# Resolution: 0.5 cm per pixel (can adjust for smoother images)
+scan_half_size = 10.0
+pixel_step = 0.5
+x_coords = np.arange(-scan_half_size, scan_half_size + pixel_step, pixel_step)
+y_coords = np.arange(-scan_half_size, scan_half_size + pixel_step, pixel_step)
+X, Y = np.meshgrid(x_coords, y_coords)
 
-# Populate the map: only the center cell (1 out of 4×4) contains the iron block
-# Iron block: 5×5 cm centered at origin, bounded by ±2.5 cm (strict inequality)
-for ix, x in enumerate(grid_positions):
-    for iy, y in enumerate(grid_positions):
-        if abs(x) < 2.5 and abs(y) < 2.5:
-            # Muons traverse the iron block here (center cell only)
-            acceptance_map[iy, ix] = acc_block
-        else:
-            acceptance_map[iy, ix] = acc_ice
+# Initialize acceptance map: default = pure ice acceptance
+acceptance_map = np.full_like(X, fill_value=acc_ice, dtype=float)
+
+# Iron block: 5×5 cm centered exactly at origin → x,y ∈ [-2.5, 2.5]
+block_half = 2.5
+block_mask = (np.abs(X) <= block_half) & (np.abs(Y) <= block_half)
+acceptance_map[block_mask] = acc_block
+
 relative_reduction_map = 1.0 - (acceptance_map / acc_ice)
 
 # Plot the acceptance reduction heatmap. Styles could still be improved.
 plt.figure(figsize=(8, 6.5))
 plt.style.use('seaborn-v0_8-darkgrid')
-extent = [grid_positions[0] - 2.5, grid_positions[-1] + 2.5,
-          grid_positions[0] - 2.5, grid_positions[-1] + 2.5]
+extent = [x_coords.min(), x_coords.max(), y_coords.min(), y_coords.max()]
 im = plt.imshow(relative_reduction_map, extent=extent, origin='lower',
                 cmap='YlOrRd', vmin=0, vmax=np.max(relative_reduction_map),
-                interpolation='nearest', alpha=0.95)
+                interpolation='nearest', alpha=0.95, aspect='equal')
 cbar = plt.colorbar(im, label='Relative reduction in acceptance', pad=0.02)
 cbar.ax.tick_params(labelsize=10)
 plt.title('Simulated reduction in muon acceptance due to iron block', fontsize=14, fontweight='bold', pad=15)
