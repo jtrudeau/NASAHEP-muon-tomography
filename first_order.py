@@ -74,15 +74,17 @@ acc_ice = compute_acceptance(acceptance_threshold, use_block=False)
 acc_block = compute_acceptance(acceptance_threshold, use_block=True)
 
 # Define a scanning grid: 20×20 cm phantom divided into 5‑cm cells
+# Grid cells are centered at: [-7.5, -2.5, 2.5, 7.5] (4×4 grid, 5 cm spacing)
 grid_positions = [-7.5, -2.5, 2.5, 7.5]
 acceptance_map = np.ones((4, 4))
 relative_reduction_map = np.zeros_like(acceptance_map)
 
-# Populate the map: cells covering the central 5×5 cm region represent the block
+# Populate the map: only the center cell (1 out of 4×4) contains the iron block
+# Iron block: 5×5 cm centered at origin, bounded by ±2.5 cm (strict inequality)
 for ix, x in enumerate(grid_positions):
     for iy, y in enumerate(grid_positions):
-        if abs(x) <= 2.5 and abs(y) <= 2.5:
-            # Muons traverse the iron block here
+        if abs(x) < 2.5 and abs(y) < 2.5:
+            # Muons traverse the iron block here (center cell only)
             acceptance_map[iy, ix] = acc_block
         else:
             acceptance_map[iy, ix] = acc_ice
