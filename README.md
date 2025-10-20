@@ -1,6 +1,6 @@
 # Muon Tomography Simulation
 
-A first-order Monte Carlo simulation that demonstrates muon tomography – using cosmic-ray muons to image subsurface density by measuring scattering.
+A first-order Monte Carlo simulation that demonstrates muon tomography using cosmic-ray muons to image subsurface density by measuring scattering.
 
 ## How it works roughly:
 
